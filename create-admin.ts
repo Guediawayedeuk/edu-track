@@ -1,32 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
 
 const SUPABASE_URL = "https://grbqpuqlltkcwpsubhui.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdyYnFwdXFsbHRrY3dwc3ViaHVpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI0MzA5NzQsImV4cCI6MjA4ODAwNjk3NH0.odWXMv07KJJ249XKeR1GRz2xbJGqJruUkvcrz_tiVP8";
+const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-class MemoryStorage {
-  private data = new Map<string, string>();
-  getItem(key: string): string | null { return this.data.get(key) ?? null; }
-  setItem(key: string, value: string): void { this.data.set(key, value); }
-  removeItem(key: string): void { this.data.delete(key); }
-}
-
-const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
   auth: {
-    storage: new MemoryStorage(),
-    persistSession: true,
-    autoRefreshToken: true,
+    autoRefreshToken: false,
+    persistSession: false,
   }
 });
 
 async function createAdmin() {
-  console.log("Creating admin user...");
+  console.log("Creating admin user with service role...");
   
-  const { data, error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.admin.createUser({
     email: "admin@edutrack.com",
     password: "Azerty10@",
-    options: {
-      data: { first_name: "Admin", last_name: "EduTrack" },
-    },
+    email_confirm: true,
+    user_metadata: { first_name: "Admin", last_name: "EduTrack" },
   });
 
   if (error) {
@@ -34,20 +25,33 @@ async function createAdmin() {
     process.exit(1);
   }
 
-  console.log("User created:", data.user?.id);
+  console.log("User created:", data.user.id);
   
-  if (data.user) {
-    const { error: roleError } = await supabase
-      .from("user_roles")
-      .insert({ user_id: data.user.id, role: "admin" });
-    
-    if (roleError) {
-      console.error("Error assigning role:", roleError.message);
-      process.exit(1);
-    } else {
-      console.log("Admin role assigned successfully!");
-    }
+  const { error: roleError } = await supabase
+    .from("user_roles")
+    .insert({ user_id: data.user.id, role: "admin" });
+  
+  if (roleError) {
+    console.error("Error assigning role:", roleError.message);
+    process.exit(1);
   }
+
+  const { error: profileError } = await supabase
+    .from("profiles")
+    .insert({ 
+      user_id: data.user.id, 
+      first_name: "Admin", 
+      last_name: "EduTrack" 
+    });
+  
+  if (profileError) {
+    console.error("Error creating profile:", profileError.message);
+    process.exit(1);
+  }
+
+  console.log("Admin account created successfully!");
+  console.log("Email: admin@edutrack.com");
+  console.log("Password: Azerty10@");
 }
 
 createAdmin();

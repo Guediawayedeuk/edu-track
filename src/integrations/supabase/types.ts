@@ -44,6 +44,80 @@ export type Database = {
         }
         Relationships: []
       }
+      students: {
+        Row: {
+          class_name: string
+          created_at: string
+          enrollment_date: string
+          id: string
+          parent_user_id: string | null
+          user_id: string
+        }
+        Insert: {
+          class_name: string
+          created_at?: string
+          enrollment_date?: string
+          id?: string
+          parent_user_id?: string | null
+          user_id: string
+        }
+        Update: {
+          class_name?: string
+          created_at?: string
+          enrollment_date?: string
+          id?: string
+          parent_user_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "students_parent_user_id_fkey"
+            columns: ["parent_user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "students_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      teachers: {
+        Row: {
+          created_at: string
+          hire_date: string
+          id: string
+          subject: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          hire_date?: string
+          id?: string
+          subject: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          hire_date?: string
+          id?: string
+          subject?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "teachers_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string

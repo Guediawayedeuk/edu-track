@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Users, BookOpen, Calendar, ClipboardList,
   FileText, BarChart3, Bell, LogOut, Menu, X, GraduationCap,
-  ChevronRight, UserCircle, MessageSquare, Upload
+  ChevronRight, UserCircle, MessageSquare, Upload, CheckSquare,
+  FileCheck, FolderOpen, Video, User
 } from "lucide-react";
 
 interface NavItem {

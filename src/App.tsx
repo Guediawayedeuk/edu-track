@@ -8,6 +8,18 @@ import Index from "./pages/Index";
 import Login from "./pages/Login";
 import AdminDashboard from "./pages/AdminDashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
+import TeacherClasses from "./pages/teacher/TeacherClasses";
+import TeacherSubjects from "./pages/teacher/TeacherSubjects";
+import TeacherAttendance from "./pages/teacher/TeacherAttendance";
+import TeacherGrades from "./pages/teacher/TeacherGrades";
+import TeacherTimetable from "./pages/teacher/TeacherTimetable";
+import TeacherAssignments from "./pages/teacher/TeacherAssignments";
+import TeacherExams from "./pages/teacher/TeacherExams";
+import TeacherResources from "./pages/teacher/TeacherResources";
+import TeacherMessages from "./pages/teacher/TeacherMessages";
+import TeacherNotifications from "./pages/teacher/TeacherNotifications";
+import TeacherMeetings from "./pages/teacher/TeacherMeetings";
+import TeacherProfile from "./pages/teacher/TeacherProfile";
 import ParentDashboard from "./pages/ParentDashboard";
 import NotFound from "./pages/NotFound";
 

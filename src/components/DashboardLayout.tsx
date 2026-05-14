@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, Users, BookOpen, Calendar, ClipboardList,
   FileText, BarChart3, Bell, LogOut, Menu, X, GraduationCap,
-  ChevronRight, UserCircle, MessageSquare, Upload
+  ChevronRight, UserCircle, MessageSquare, Upload, CheckSquare,
+  FileCheck, FolderOpen, Video, User
 } from "lucide-react";
 
 interface NavItem {
@@ -27,10 +28,17 @@ const adminNav: NavItem[] = [
 const teacherNav: NavItem[] = [
   { label: "Tableau de bord", path: "/teacher", icon: LayoutDashboard },
   { label: "Mes classes", path: "/teacher/classes", icon: BookOpen },
-  { label: "Notes", path: "/teacher/grades", icon: ClipboardList },
-  { label: "Absences", path: "/teacher/attendance", icon: Users },
-  { label: "Devoirs", path: "/teacher/assignments", icon: Upload },
+  { label: "Mes matières", path: "/teacher/subjects", icon: ClipboardList },
+  { label: "Présences", path: "/teacher/attendance", icon: CheckSquare },
+  { label: "Notes", path: "/teacher/grades", icon: FileCheck },
   { label: "Emploi du temps", path: "/teacher/timetable", icon: Calendar },
+  { label: "Devoirs", path: "/teacher/assignments", icon: Upload },
+  { label: "Examens", path: "/teacher/exams", icon: FileText },
+  { label: "Ressources", path: "/teacher/resources", icon: FolderOpen },
+  { label: "Messagerie", path: "/teacher/messages", icon: MessageSquare },
+  { label: "Notifications", path: "/teacher/notifications", icon: Bell },
+  { label: "Réunions en ligne", path: "/teacher/meetings", icon: Video },
+  { label: "Profil", path: "/teacher/profile", icon: User },
 ];
 
 const parentNav: NavItem[] = [

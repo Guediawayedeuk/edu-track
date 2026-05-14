@@ -5,7 +5,8 @@ import {
   LayoutDashboard, Users, BookOpen, Calendar, ClipboardList,
   FileText, BarChart3, Bell, LogOut, Menu, X, GraduationCap,
   ChevronRight, UserCircle, MessageSquare, Upload, CheckSquare,
-  FileCheck, FolderOpen, Video, User
+  FileCheck, FolderOpen, Video, User, CreditCard, Megaphone,
+  ShieldCheck, KeyRound, UsersRound
 } from "lucide-react";
 
 interface NavItem {
@@ -16,13 +17,22 @@ interface NavItem {
 
 const adminNav: NavItem[] = [
   { label: "Tableau de bord", path: "/admin", icon: LayoutDashboard },
-  { label: "Élèves", path: "/admin/students", icon: Users },
   { label: "Enseignants", path: "/admin/teachers", icon: UserCircle },
+  { label: "Élèves", path: "/admin/students", icon: Users },
+  { label: "Parents", path: "/admin/parents", icon: UsersRound },
   { label: "Classes", path: "/admin/classes", icon: BookOpen },
   { label: "Matières", path: "/admin/subjects", icon: ClipboardList },
   { label: "Emploi du temps", path: "/admin/timetable", icon: Calendar },
-  { label: "Bulletins", path: "/admin/reports", icon: FileText },
-  { label: "Statistiques", path: "/admin/stats", icon: BarChart3 },
+  { label: "Examens & notes", path: "/admin/exams", icon: FileCheck },
+  { label: "Présences", path: "/admin/attendance", icon: CheckSquare },
+  { label: "Paiements", path: "/admin/payments", icon: CreditCard },
+  { label: "Annonces", path: "/admin/announcements", icon: Megaphone },
+  { label: "Documents", path: "/admin/documents", icon: FolderOpen },
+  { label: "Messagerie", path: "/admin/messages", icon: MessageSquare },
+  { label: "Notifications", path: "/admin/notifications", icon: Bell },
+  { label: "Sécurité", path: "/admin/security", icon: ShieldCheck },
+  { label: "Rôles & permissions", path: "/admin/roles", icon: KeyRound },
+  { label: "Rapports & stats", path: "/admin/stats", icon: BarChart3 },
 ];
 
 const teacherNav: NavItem[] = [

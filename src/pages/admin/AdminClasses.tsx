@@ -1,38 +1,89 @@
+import { useState } from "react";
 import AdminPageShell from "./AdminPageShell";
 import { Button } from "@/components/ui/button";
-import { Plus, Users } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Plus, Trash2 } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { listClasses, createClass, deleteClass } from "@/lib/api/classes";
+import { toast } from "sonner";
 
-const classes = [
-  { nom: "6ème A", niveau: "6ème", eleves: 28, prof: "Mme. Dupont" },
-  { nom: "6ème B", niveau: "6ème", eleves: 26, prof: "M. Martin" },
-  { nom: "5ème A", niveau: "5ème", eleves: 30, prof: "Mme. Leroy" },
-  { nom: "4ème A", niveau: "4ème", eleves: 27, prof: "M. Bernard" },
-  { nom: "3ème C", niveau: "3ème", eleves: 25, prof: "Mme. Dupont" },
-];
+const AdminClasses = () => {
+  const qc = useQueryClient();
+  const { data, isLoading } = useQuery({ queryKey: ["classes"], queryFn: listClasses });
+  const [open, setOpen] = useState(false);
+  const [form, setForm] = useState({ name: "", level: "", room: "" });
 
-const AdminClasses = () => (
-  <AdminPageShell
-    title="Gestion des classes"
-    subtitle="Composition et professeurs principaux"
-    actions={<Button className="gradient-primary text-primary-foreground"><Plus className="mr-2 h-4 w-4" /> Nouvelle classe</Button>}
-  >
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {classes.map((c) => (
-        <div key={c.nom} className="glass-card p-5">
-          <div className="flex items-start justify-between mb-3">
-            <div>
-              <h3 className="text-lg font-bold text-foreground">{c.nom}</h3>
-              <p className="text-xs text-muted-foreground">Niveau {c.niveau}</p>
+  const createMut = useMutation({
+    mutationFn: () => createClass({ name: form.name, level: form.level || null, room: form.room || null, main_teacher_id: null }),
+    onSuccess: () => {
+      toast.success("Classe créée");
+      qc.invalidateQueries({ queryKey: ["classes"] });
+      setOpen(false);
+      setForm({ name: "", level: "", room: "" });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Erreur"),
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: deleteClass,
+    onSuccess: () => { toast.success("Classe supprimée"); qc.invalidateQueries({ queryKey: ["classes"] }); },
+    onError: (e: any) => toast.error(e.message ?? "Erreur"),
+  });
+
+  return (
+    <AdminPageShell
+      title="Gestion des classes"
+      subtitle="Créer et organiser les classes de l'établissement"
+      actions={
+        <Dialog open={open} onOpenChange={setOpen}>
+          <DialogTrigger asChild>
+            <Button className="gradient-primary text-primary-foreground"><Plus className="mr-2 h-4 w-4" /> Nouvelle classe</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader><DialogTitle>Nouvelle classe</DialogTitle></DialogHeader>
+            <div className="space-y-3">
+              <div><Label>Nom (ex: 6ème A)</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
+              <div><Label>Niveau</Label><Input value={form.level} onChange={(e) => setForm({ ...form, level: e.target.value })} /></div>
+              <div><Label>Salle</Label><Input value={form.room} onChange={(e) => setForm({ ...form, room: e.target.value })} /></div>
             </div>
-            <span className="rounded-full bg-secondary/15 px-3 py-1 text-xs font-medium text-secondary">{c.eleves} élèves</span>
-          </div>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Users className="h-4 w-4" /> Prof. principal : {c.prof}
-          </div>
-        </div>
-      ))}
-    </div>
-  </AdminPageShell>
-);
+            <DialogFooter><Button disabled={createMut.isPending} onClick={() => createMut.mutate()}>Créer</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
+      }
+    >
+      <div className="glass-card overflow-hidden">
+        <table className="w-full text-sm">
+          <thead className="bg-muted/40 text-left text-muted-foreground">
+            <tr>
+              <th className="px-4 py-3">Nom</th>
+              <th className="px-4 py-3">Niveau</th>
+              <th className="px-4 py-3">Salle</th>
+              <th className="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading && <tr><td colSpan={4} className="p-3"><Skeleton className="h-6 w-full" /></td></tr>}
+            {!isLoading && (data ?? []).length === 0 && <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Aucune classe</td></tr>}
+            {(data ?? []).map((c) => (
+              <tr key={c.id} className="border-t border-border hover:bg-muted/30">
+                <td className="px-4 py-3 font-medium">{c.name}</td>
+                <td className="px-4 py-3">{c.level ?? "—"}</td>
+                <td className="px-4 py-3 text-muted-foreground">{c.room ?? "—"}</td>
+                <td className="px-4 py-3 text-right">
+                  <Button size="icon" variant="ghost" onClick={() => { if (confirm("Supprimer cette classe ?")) deleteMut.mutate(c.id); }}>
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </AdminPageShell>
+  );
+};
 
 export default AdminClasses;

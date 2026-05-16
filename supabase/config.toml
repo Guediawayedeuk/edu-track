@@ -1,1 +1,13 @@
 project_id = "grbqpuqlltkcwpsubhui"
+
+[functions.admin-create-user]
+verify_jwt = false
+
+[functions.admin-create-student]
+verify_jwt = false
+
+[functions.admin-delete-user]
+verify_jwt = false
+
+[functions.create-admin]
+verify_jwt = false

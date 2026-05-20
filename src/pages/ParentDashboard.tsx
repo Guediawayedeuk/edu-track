@@ -4,11 +4,13 @@ import StatCard from "@/components/StatCard";
 import TimetablePreview from "@/components/TimetablePreview";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ClipboardList, Award, Calendar, Download } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ClipboardList, Award, Calendar, Download, Sparkles, TrendingDown, TrendingUp, Minus, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { generateBulletinPDF, getBulletinData, type BulletinData } from "@/lib/api/bulletins";
+import { listAlertsForStudent, requestAIAnalysis, type AIAlert } from "@/lib/api/aiAlerts";
 import { toast } from "sonner";
 
 const ParentDashboard = () => {
@@ -16,6 +18,12 @@ const ParentDashboard = () => {
   const [studentId, setStudentId] = useState<string | null>(null);
   const [data, setData] = useState<BulletinData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [alerts, setAlerts] = useState<AIAlert[]>([]);
+  const [analyzing, setAnalyzing] = useState(false);
+
+  const loadAlerts = async (sid: string) => {
+    try { setAlerts(await listAlertsForStudent(sid)); } catch {}
+  };
 
   useEffect(() => {
     (async () => {
@@ -31,6 +39,7 @@ const ParentDashboard = () => {
       try {
         const b = await getBulletinData(ss.id);
         setData(b);
+        await loadAlerts(ss.id);
       } catch (e: any) {
         toast.error(e.message);
       } finally {
@@ -43,6 +52,20 @@ const ParentDashboard = () => {
     if (!data) return;
     await generateBulletinPDF(data);
     toast.success("Bulletin généré");
+  };
+
+  const handleAnalyze = async () => {
+    if (!studentId) return;
+    setAnalyzing(true);
+    try {
+      await requestAIAnalysis(studentId);
+      await loadAlerts(studentId);
+      toast.success("Analyse IA terminée");
+    } catch (e: any) {
+      toast.error(e.message || "Erreur lors de l'analyse");
+    } finally {
+      setAnalyzing(false);
+    }
   };
 
   const fullName = useMemo(() => data ? `${data.student.first_name} ${data.student.last_name}`.trim() : "", [data]);

@@ -37,6 +37,7 @@ import TeacherNotifications from "./pages/teacher/TeacherNotifications";
 import TeacherMeetings from "./pages/teacher/TeacherMeetings";
 import TeacherProfile from "./pages/teacher/TeacherProfile";
 import ParentDashboard from "./pages/ParentDashboard";
+import Messages from "./pages/Messages";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();

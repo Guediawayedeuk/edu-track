@@ -123,6 +123,55 @@ const ParentDashboard = () => {
             </motion.div>
             <TimetablePreview />
           </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.5 }}
+            className="glass-card p-6 mt-6"
+          >
+            <div className="mb-4 flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary" />
+                <h3 className="text-lg font-semibold">Assistant IA — Analyse & recommandations</h3>
+              </div>
+              <Button onClick={handleAnalyze} disabled={analyzing} variant="outline">
+                <Sparkles className="mr-2 h-4 w-4" />
+                {analyzing ? "Analyse en cours..." : "Lancer une analyse"}
+              </Button>
+            </div>
+            {alerts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucune analyse encore. Cliquez sur "Lancer une analyse" pour obtenir une prédiction et des recommandations personnalisées.</p>
+            ) : (
+              <div className="space-y-4">
+                {alerts.slice(0, 3).map((a) => (
+                  <div key={a.id} className="rounded-lg border border-border p-4">
+                    <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
+                      <Badge variant={a.severity === "critical" ? "destructive" : a.severity === "warning" ? "default" : "secondary"}>
+                        {a.severity === "critical" && <AlertTriangle className="mr-1 h-3 w-3" />}
+                        {a.severity === "critical" ? "Critique" : a.severity === "warning" ? "Attention" : "Info"}
+                      </Badge>
+                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                        {a.current_average != null && <span>Actuelle : <b>{Number(a.current_average).toFixed(2)}/20</b></span>}
+                        {a.predicted_average != null && (
+                          <span className="flex items-center gap-1">
+                            Prédite : <b>{Number(a.predicted_average).toFixed(2)}/20</b>
+                            {a.trend === "down" ? <TrendingDown className="h-3 w-3 text-destructive" /> : a.trend === "up" ? <TrendingUp className="h-3 w-3 text-success" /> : <Minus className="h-3 w-3" />}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <p className="text-sm mb-3">{a.summary}</p>
+                    {Array.isArray(a.recommendations) && a.recommendations.length > 0 && (
+                      <ul className="space-y-1.5 text-sm">
+                        {a.recommendations.map((r, i) => (
+                          <li key={i}><b>{r.title} :</b> <span className="text-muted-foreground">{r.description}</span></li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
         </>
       ) : (
         <div className="glass-card p-12 text-center text-muted-foreground">

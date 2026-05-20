@@ -8,6 +8,7 @@ import {
   FileCheck, FolderOpen, Video, User, CreditCard, Megaphone,
   ShieldCheck, KeyRound, UsersRound
 } from "lucide-react";
+import NotificationBell from "@/components/NotificationBell";
 
 interface NavItem {
   label: string;
@@ -163,10 +164,7 @@ const DashboardLayout = ({ children, role, userName }: DashboardLayoutProps) => 
             </button>
           )}
           <div className="flex-1" />
-          <button className="relative rounded-lg p-2 text-muted-foreground hover:bg-muted">
-            <Bell className="h-5 w-5" />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
-          </button>
+          <NotificationBell />
         </header>
 
         {/* Content */}

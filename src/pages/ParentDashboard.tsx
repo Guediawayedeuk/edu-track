@@ -154,7 +154,7 @@ const ParentDashboard = () => {
                         {a.predicted_average != null && (
                           <span className="flex items-center gap-1">
                             Prédite : <b>{Number(a.predicted_average).toFixed(2)}/20</b>
-                            {a.trend === "down" ? <TrendingDown className="h-3 w-3 text-destructive" /> : a.trend === "up" ? <TrendingUp className="h-3 w-3 text-success" /> : <Minus className="h-3 w-3" />}
+                            {a.trend === "down" ? <TrendingDown className="h-3 w-3 text-destructive" /> : a.trend === "up" ? <TrendingUp className="h-3 w-3 text-primary" /> : <Minus className="h-3 w-3" />}
                           </span>
                         )}
                       </div>

@@ -105,10 +105,13 @@ const TeacherGrades = () => {
             <CardTitle className="text-lg flex items-center justify-between">
               <span>Élèves de {exam.class?.name}</span>
               <span className="text-sm font-normal text-muted-foreground">
-                Moyenne classe : <b className="text-foreground">{(() => {
-                  const nums = Object.values(values).map((v) => Number(v)).filter((n) => !Number.isNaN(n));
-                  return nums.length ? (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(2) : "—";
-                })()}/{exam.max_grade}
+                Moyenne classe :{" "}
+                <b className="text-foreground">
+                  {(() => {
+                    const nums = Object.values(values).map((v) => Number(v)).filter((n) => !Number.isNaN(n));
+                    return nums.length ? (nums.reduce((a, b) => a + b, 0) / nums.length).toFixed(2) : "—";
+                  })()}/{exam.max_grade}
+                </b>
               </span>
             </CardTitle>
           </CardHeader>

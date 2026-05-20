@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_alerts: {
+        Row: {
+          current_average: number | null
+          generated_at: string
+          id: string
+          predicted_average: number | null
+          recommendations: Json
+          severity: string
+          student_id: string
+          summary: string
+          trend: string | null
+        }
+        Insert: {
+          current_average?: number | null
+          generated_at?: string
+          id?: string
+          predicted_average?: number | null
+          recommendations?: Json
+          severity?: string
+          student_id: string
+          summary: string
+          trend?: string | null
+        }
+        Update: {
+          current_average?: number | null
+          generated_at?: string
+          id?: string
+          predicted_average?: number | null
+          recommendations?: Json
+          severity?: string
+          student_id?: string
+          summary?: string
+          trend?: string | null
+        }
+        Relationships: []
+      }
       attendance: {
         Row: {
           class_id: string | null
@@ -238,6 +274,86 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      messages: {
+        Row: {
+          body: string
+          created_at: string
+          id: string
+          parent_message_id: string | null
+          read_at: string | null
+          recipient_id: string
+          sender_id: string
+          student_id: string | null
+          subject: string | null
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          id?: string
+          parent_message_id?: string | null
+          read_at?: string | null
+          recipient_id: string
+          sender_id: string
+          student_id?: string | null
+          subject?: string | null
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          id?: string
+          parent_message_id?: string | null
+          read_at?: string | null
+          recipient_id?: string
+          sender_id?: string
+          student_id?: string | null
+          subject?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_parent_message_id_fkey"
+            columns: ["parent_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          body: string | null
+          created_at: string
+          id: string
+          link: string | null
+          metadata: Json
+          read_at: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          metadata?: Json
+          read_at?: string | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          id?: string
+          link?: string | null
+          metadata?: Json
+          read_at?: string | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       payments: {
         Row: {

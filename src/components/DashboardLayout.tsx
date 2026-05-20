@@ -8,6 +8,7 @@ import {
   FileCheck, FolderOpen, Video, User, CreditCard, Megaphone,
   ShieldCheck, KeyRound, UsersRound
 } from "lucide-react";
+import NotificationBell from "@/components/NotificationBell";
 
 interface NavItem {
   label: string;
@@ -28,7 +29,7 @@ const adminNav: NavItem[] = [
   { label: "Paiements", path: "/admin/payments", icon: CreditCard },
   { label: "Annonces", path: "/admin/announcements", icon: Megaphone },
   { label: "Documents", path: "/admin/documents", icon: FolderOpen },
-  { label: "Messagerie", path: "/admin/messages", icon: MessageSquare },
+  { label: "Messagerie", path: "/messages", icon: MessageSquare },
   { label: "Notifications", path: "/admin/notifications", icon: Bell },
   { label: "Sécurité", path: "/admin/security", icon: ShieldCheck },
   { label: "Rôles & permissions", path: "/admin/roles", icon: KeyRound },
@@ -45,7 +46,7 @@ const teacherNav: NavItem[] = [
   { label: "Devoirs", path: "/teacher/assignments", icon: Upload },
   { label: "Examens", path: "/teacher/exams", icon: FileText },
   { label: "Ressources", path: "/teacher/resources", icon: FolderOpen },
-  { label: "Messagerie", path: "/teacher/messages", icon: MessageSquare },
+  { label: "Messagerie", path: "/messages", icon: MessageSquare },
   { label: "Notifications", path: "/teacher/notifications", icon: Bell },
   { label: "Réunions en ligne", path: "/teacher/meetings", icon: Video },
   { label: "Profil", path: "/teacher/profile", icon: User },
@@ -56,7 +57,7 @@ const parentNav: NavItem[] = [
   { label: "Notes", path: "/parent/grades", icon: ClipboardList },
   { label: "Bulletin", path: "/parent/report", icon: FileText },
   { label: "Emploi du temps", path: "/parent/timetable", icon: Calendar },
-  { label: "Messages", path: "/parent/messages", icon: MessageSquare },
+  { label: "Messages", path: "/messages", icon: MessageSquare },
 ];
 
 interface DashboardLayoutProps {
@@ -163,10 +164,7 @@ const DashboardLayout = ({ children, role, userName }: DashboardLayoutProps) => 
             </button>
           )}
           <div className="flex-1" />
-          <button className="relative rounded-lg p-2 text-muted-foreground hover:bg-muted">
-            <Bell className="h-5 w-5" />
-            <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-destructive" />
-          </button>
+          <NotificationBell />
         </header>
 
         {/* Content */}

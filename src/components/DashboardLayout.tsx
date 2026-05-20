@@ -57,7 +57,7 @@ const parentNav: NavItem[] = [
   { label: "Notes", path: "/parent/grades", icon: ClipboardList },
   { label: "Bulletin", path: "/parent/report", icon: FileText },
   { label: "Emploi du temps", path: "/parent/timetable", icon: Calendar },
-  { label: "Messages", path: "/parent/messages", icon: MessageSquare },
+  { label: "Messages", path: "/messages", icon: MessageSquare },
 ];
 
 interface DashboardLayoutProps {

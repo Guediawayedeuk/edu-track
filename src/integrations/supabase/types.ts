@@ -18,9 +18,12 @@ export type Database = {
         Row: {
           current_average: number | null
           generated_at: string
+          handled_at: string | null
+          handled_by: string | null
           id: string
           predicted_average: number | null
           recommendations: Json
+          recommendations_state: Json
           severity: string
           student_id: string
           summary: string
@@ -29,9 +32,12 @@ export type Database = {
         Insert: {
           current_average?: number | null
           generated_at?: string
+          handled_at?: string | null
+          handled_by?: string | null
           id?: string
           predicted_average?: number | null
           recommendations?: Json
+          recommendations_state?: Json
           severity?: string
           student_id: string
           summary: string
@@ -40,9 +46,12 @@ export type Database = {
         Update: {
           current_average?: number | null
           generated_at?: string
+          handled_at?: string | null
+          handled_by?: string | null
           id?: string
           predicted_average?: number | null
           recommendations?: Json
+          recommendations_state?: Json
           severity?: string
           student_id?: string
           summary?: string
@@ -579,6 +588,45 @@ export type Database = {
           },
         ]
       }
+      user_notification_prefs: {
+        Row: {
+          ai_enabled: boolean
+          attendance_enabled: boolean
+          grade_enabled: boolean
+          message_enabled: boolean
+          paused_until: string | null
+          payment_enabled: boolean
+          quiet_hours_end: string | null
+          quiet_hours_start: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_enabled?: boolean
+          attendance_enabled?: boolean
+          grade_enabled?: boolean
+          message_enabled?: boolean
+          paused_until?: string | null
+          payment_enabled?: boolean
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_enabled?: boolean
+          attendance_enabled?: boolean
+          grade_enabled?: boolean
+          message_enabled?: boolean
+          paused_until?: string | null
+          payment_enabled?: boolean
+          quiet_hours_end?: string | null
+          quiet_hours_start?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -615,6 +663,10 @@ export type Database = {
       }
       is_parent_of_student: { Args: { _student_id: string }; Returns: boolean }
       is_student_self: { Args: { _student_id: string }; Returns: boolean }
+      mark_alert_handled: {
+        Args: { _alert_id: string; _handled?: boolean }
+        Returns: undefined
+      }
       mark_message_read: { Args: { _message_id: string }; Returns: undefined }
       send_user_message: {
         Args: {
@@ -626,7 +678,30 @@ export type Database = {
         }
         Returns: string
       }
+      set_notification_pref: {
+        Args: {
+          _ai?: boolean
+          _attendance?: boolean
+          _clear_pause?: boolean
+          _clear_quiet?: boolean
+          _grade?: boolean
+          _message?: boolean
+          _paused_until?: string
+          _payment?: boolean
+          _quiet_end?: string
+          _quiet_start?: string
+        }
+        Returns: undefined
+      }
+      should_notify: {
+        Args: { _type: string; _user_id: string }
+        Returns: boolean
+      }
       teacher_handles_class: { Args: { _class_id: string }; Returns: boolean }
+      toggle_alert_recommendation: {
+        Args: { _alert_id: string; _done: boolean; _key: string }
+        Returns: undefined
+      }
     }
     Enums: {
       app_role: "admin" | "teacher" | "parent"

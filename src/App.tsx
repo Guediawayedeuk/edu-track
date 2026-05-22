@@ -38,6 +38,7 @@ import TeacherMeetings from "./pages/teacher/TeacherMeetings";
 import TeacherProfile from "./pages/teacher/TeacherProfile";
 import ParentDashboard from "./pages/ParentDashboard";
 import Messages from "./pages/Messages";
+import NotificationSettings from "./pages/NotificationSettings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -119,6 +120,7 @@ const App = () => (
             <Route path="/parent" element={<ProtectedRoute allowedRoles={["parent"]}><ParentDashboard /></ProtectedRoute>} />
             <Route path="/parent/*" element={<ProtectedRoute allowedRoles={["parent"]}><ParentDashboard /></ProtectedRoute>} />
             <Route path="/messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+            <Route path="/settings/notifications" element={<ProtectedRoute><NotificationSettings /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

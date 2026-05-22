@@ -10,6 +10,9 @@ export type AIAlert = {
   predicted_average: number | null;
   trend: "up" | "stable" | "down" | null;
   generated_at: string;
+  handled_at: string | null;
+  handled_by: string | null;
+  recommendations_state: Record<string, boolean>;
 };
 
 export async function listAlertsForStudent(student_id: string) {
@@ -18,9 +21,9 @@ export async function listAlertsForStudent(student_id: string) {
     .select("*")
     .eq("student_id", student_id)
     .order("generated_at", { ascending: false })
-    .limit(10);
+    .limit(20);
   if (error) throw error;
-  return (data ?? []) as AIAlert[];
+  return (data ?? []) as unknown as AIAlert[];
 }
 
 export async function requestAIAnalysis(student_id: string) {
@@ -29,4 +32,21 @@ export async function requestAIAnalysis(student_id: string) {
   });
   if (error) throw error;
   return data;
+}
+
+export async function markAlertHandled(alert_id: string, handled = true) {
+  const { error } = await supabase.rpc("mark_alert_handled" as any, {
+    _alert_id: alert_id,
+    _handled: handled,
+  });
+  if (error) throw error;
+}
+
+export async function toggleAlertRecommendation(alert_id: string, key: string, done: boolean) {
+  const { error } = await supabase.rpc("toggle_alert_recommendation" as any, {
+    _alert_id: alert_id,
+    _key: key,
+    _done: done,
+  });
+  if (error) throw error;
 }

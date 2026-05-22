@@ -8,7 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Send, Plus, Mail, MailOpen } from "lucide-react";
+import { Send, Plus, Mail, MailOpen, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
@@ -25,15 +25,38 @@ const MessagesPage = () => {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ recipient_id: "", subject: "", body: "" });
 
+  // Filters
+  const [search, setSearch] = useState("");
+  const [studentFilter, setStudentFilter] = useState<string>("all");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [unreadOnly, setUnreadOnly] = useState(false);
+
   useEffect(() => {
     if (active && !active.read_at && active.recipient_id === user?.id) {
       markMessageRead(active.id).then(() => qc.invalidateQueries({ queryKey: ["my-messages"] }));
     }
   }, [active, user, qc]);
 
+  const filteredMsgs = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return (msgsQ.data ?? []).filter((m) => {
+      if (studentFilter !== "all" && m.student_id !== studentFilter) return false;
+      if (dateFrom && new Date(m.created_at) < new Date(dateFrom)) return false;
+      if (dateTo && new Date(m.created_at) > new Date(dateTo + "T23:59:59")) return false;
+      if (unreadOnly && (m.read_at || m.recipient_id !== user?.id)) return false;
+      if (q) {
+        const contact = contactsQ.data?.find((c) => c.user_id === (m.sender_id === user?.id ? m.recipient_id : m.sender_id));
+        const hay = `${m.subject ?? ""} ${m.body} ${contact?.name ?? ""}`.toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [msgsQ.data, search, studentFilter, dateFrom, dateTo, unreadOnly, contactsQ.data, user]);
+
   const conversations = useMemo(() => {
     const map = new Map<string, Message[]>();
-    (msgsQ.data ?? []).forEach((m) => {
+    filteredMsgs.forEach((m) => {
       const other = m.sender_id === user?.id ? m.recipient_id : m.sender_id;
       if (!map.has(other)) map.set(other, []);
       map.get(other)!.push(m);
@@ -44,7 +67,13 @@ const MessagesPage = () => {
       unread: msgs.filter((m) => !m.read_at && m.recipient_id === user?.id).length,
       contact: contactsQ.data?.find((c) => c.user_id === uid),
     }));
-  }, [msgsQ.data, contactsQ.data, user]);
+  }, [filteredMsgs, contactsQ.data, user]);
+
+  const studentOptions = useMemo(() => {
+    const set = new Map<string, true>();
+    (msgsQ.data ?? []).forEach((m) => { if (m.student_id) set.set(m.student_id, true); });
+    return Array.from(set.keys());
+  }, [msgsQ.data]);
 
   const send = async () => {
     if (!form.recipient_id || !form.body.trim()) { toast.error("Destinataire et message requis"); return; }
@@ -66,6 +95,8 @@ const MessagesPage = () => {
       toast.success("Réponse envoyée");
     } catch (e: any) { toast.error(e.message); }
   };
+
+  const resetFilters = () => { setSearch(""); setStudentFilter("all"); setDateFrom(""); setDateTo(""); setUnreadOnly(false); };
 
   return (
     <DashboardLayout role={(role as any) ?? "parent"} userName={user?.email ?? "Utilisateur"}>
@@ -98,6 +129,34 @@ const MessagesPage = () => {
         </Dialog>
       </div>
 
+      {/* Filters */}
+      <Card className="glass-card mb-4">
+        <CardContent className="grid gap-3 p-4 md:grid-cols-5">
+          <div className="relative md:col-span-2">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input placeholder="Rechercher sujet, message ou contact..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+          </div>
+          <Select value={studentFilter} onValueChange={setStudentFilter}>
+            <SelectTrigger><SelectValue placeholder="Élève" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous les élèves</SelectItem>
+              {studentOptions.map((sid) => <SelectItem key={sid} value={sid}>Élève {sid.slice(0, 8)}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)} placeholder="Du" />
+          <Input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)} placeholder="Au" />
+          <div className="flex items-center gap-2 md:col-span-5">
+            <Button size="sm" variant={unreadOnly ? "default" : "outline"} onClick={() => setUnreadOnly(!unreadOnly)}>
+              <Mail className="mr-1 h-3 w-3" /> Non lus uniquement
+            </Button>
+            {(search || studentFilter !== "all" || dateFrom || dateTo || unreadOnly) && (
+              <Button size="sm" variant="ghost" onClick={resetFilters}><X className="mr-1 h-3 w-3" /> Réinitialiser</Button>
+            )}
+            <span className="ml-auto text-xs text-muted-foreground">{conversations.length} conversation(s)</span>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="glass-card lg:col-span-1">
           <CardHeader><CardTitle className="text-lg">Conversations</CardTitle></CardHeader>
@@ -114,6 +173,7 @@ const MessagesPage = () => {
                   {c.unread > 0 && <span className="rounded-full bg-primary px-2 text-[10px] font-bold text-primary-foreground">{c.unread}</span>}
                 </div>
                 <p className="mt-1 truncate text-xs text-muted-foreground">{c.latest.subject || c.latest.body}</p>
+                <p className="mt-0.5 text-[10px] text-muted-foreground">{formatDistanceToNow(new Date(c.latest.created_at), { locale: fr, addSuffix: true })}</p>
               </button>
             ))}
           </CardContent>
@@ -143,10 +203,11 @@ const ConversationView = ({ active, userId, all, onReply }: { active: Message; u
 
   return (
     <div className="space-y-4">
-      <div className="max-h-96 space-y-3 overflow-y-auto pr-2">
+      <div className="max-h-[500px] space-y-3 overflow-y-auto pr-2">
         {thread.map((m) => (
           <div key={m.id} className={`flex ${m.sender_id === userId ? "justify-end" : "justify-start"}`}>
             <div className={`max-w-[75%] rounded-lg p-3 text-sm ${m.sender_id === userId ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+              {m.subject && <p className="mb-1 text-[11px] font-semibold opacity-80">{m.subject}</p>}
               <p className="whitespace-pre-wrap">{m.body}</p>
               <p className="mt-1 text-[10px] opacity-70">{formatDistanceToNow(new Date(m.created_at), { locale: fr, addSuffix: true })}</p>
             </div>

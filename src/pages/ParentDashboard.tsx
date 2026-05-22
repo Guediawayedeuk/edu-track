@@ -140,36 +140,49 @@ const ParentDashboard = () => {
                 {analyzing ? "Analyse en cours..." : "Lancer une analyse"}
               </Button>
             </div>
+
+            {/* Filters */}
+            {alerts.length > 0 && (
+              <div className="mb-4 grid gap-2 md:grid-cols-4">
+                <div className="relative md:col-span-2">
+                  <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                  <Input placeholder="Rechercher dans les alertes..." className="pl-9 h-9" value={alertSearch} onChange={(e) => setAlertSearch(e.target.value)} />
+                </div>
+                <Select value={sevFilter} onValueChange={setSevFilter}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="Sévérité" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Toutes sévérités</SelectItem>
+                    <SelectItem value="critical">Critique</SelectItem>
+                    <SelectItem value="warning">Attention</SelectItem>
+                    <SelectItem value="info">Info</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="Statut" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tous statuts</SelectItem>
+                    <SelectItem value="open">À traiter</SelectItem>
+                    <SelectItem value="handled">Traitées</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Input type="date" value={alertFrom} onChange={(e) => setAlertFrom(e.target.value)} className="h-9 md:col-span-2" />
+                <Input type="date" value={alertTo} onChange={(e) => setAlertTo(e.target.value)} className="h-9 md:col-span-2" />
+                {(alertSearch || sevFilter !== "all" || statusFilter !== "all" || alertFrom || alertTo) && (
+                  <Button size="sm" variant="ghost" onClick={() => { setAlertSearch(""); setSevFilter("all"); setStatusFilter("all"); setAlertFrom(""); setAlertTo(""); }} className="h-9 md:col-span-4 justify-start">
+                    <X className="mr-1 h-3 w-3" /> Réinitialiser les filtres
+                  </Button>
+                )}
+              </div>
+            )}
+
             {alerts.length === 0 ? (
               <p className="text-sm text-muted-foreground">Aucune analyse encore. Cliquez sur "Lancer une analyse" pour obtenir une prédiction et des recommandations personnalisées.</p>
+            ) : filteredAlerts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aucune alerte ne correspond aux filtres.</p>
             ) : (
               <div className="space-y-4">
-                {alerts.slice(0, 3).map((a) => (
-                  <div key={a.id} className="rounded-lg border border-border p-4">
-                    <div className="flex items-center justify-between gap-2 flex-wrap mb-2">
-                      <Badge variant={a.severity === "critical" ? "destructive" : a.severity === "warning" ? "default" : "secondary"}>
-                        {a.severity === "critical" && <AlertTriangle className="mr-1 h-3 w-3" />}
-                        {a.severity === "critical" ? "Critique" : a.severity === "warning" ? "Attention" : "Info"}
-                      </Badge>
-                      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                        {a.current_average != null && <span>Actuelle : <b>{Number(a.current_average).toFixed(2)}/20</b></span>}
-                        {a.predicted_average != null && (
-                          <span className="flex items-center gap-1">
-                            Prédite : <b>{Number(a.predicted_average).toFixed(2)}/20</b>
-                            {a.trend === "down" ? <TrendingDown className="h-3 w-3 text-destructive" /> : a.trend === "up" ? <TrendingUp className="h-3 w-3 text-primary" /> : <Minus className="h-3 w-3" />}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    <p className="text-sm mb-3">{a.summary}</p>
-                    {Array.isArray(a.recommendations) && a.recommendations.length > 0 && (
-                      <ul className="space-y-1.5 text-sm">
-                        {a.recommendations.map((r, i) => (
-                          <li key={i}><b>{r.title} :</b> <span className="text-muted-foreground">{r.description}</span></li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+                {filteredAlerts.map((a) => (
+                  <AIAlertCard key={a.id} alert={a} onChange={() => studentId && loadAlerts(studentId)} />
                 ))}
               </div>
             )}

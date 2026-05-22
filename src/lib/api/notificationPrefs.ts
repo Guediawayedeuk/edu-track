@@ -32,7 +32,8 @@ export async function getMyNotificationPrefs(): Promise<NotificationPrefs> {
     .eq("user_id", user.id)
     .maybeSingle();
   if (error) throw error;
-  return { user_id: user.id, ...DEFAULTS, ...(data ?? {}) } as NotificationPrefs;
+  const row = (data ?? {}) as Partial<NotificationPrefs>;
+  return { user_id: user.id, ...DEFAULTS, ...row } as NotificationPrefs;
 }
 
 export async function updateNotificationPrefs(input: {

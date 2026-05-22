@@ -22,6 +22,24 @@ const ParentDashboard = () => {
   const [loading, setLoading] = useState(true);
   const [alerts, setAlerts] = useState<AIAlert[]>([]);
   const [analyzing, setAnalyzing] = useState(false);
+  const [alertSearch, setAlertSearch] = useState("");
+  const [sevFilter, setSevFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [alertFrom, setAlertFrom] = useState("");
+  const [alertTo, setAlertTo] = useState("");
+
+  const filteredAlerts = useMemo(() => {
+    const q = alertSearch.trim().toLowerCase();
+    return alerts.filter((a) => {
+      if (sevFilter !== "all" && a.severity !== sevFilter) return false;
+      if (statusFilter === "open" && a.handled_at) return false;
+      if (statusFilter === "handled" && !a.handled_at) return false;
+      if (alertFrom && new Date(a.generated_at) < new Date(alertFrom)) return false;
+      if (alertTo && new Date(a.generated_at) > new Date(alertTo + "T23:59:59")) return false;
+      if (q && !a.summary.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [alerts, alertSearch, sevFilter, statusFilter, alertFrom, alertTo]);
 
   const loadAlerts = async (sid: string) => {
     try { setAlerts(await listAlertsForStudent(sid)); } catch {}

@@ -25,32 +25,20 @@ export async function listMyMessages() {
 }
 
 export async function sendMessage(input: { recipient_id: string; subject?: string; body: string; student_id?: string | null; parent_message_id?: string | null }) {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error("Non authentifié");
-  const { data, error } = await supabase.from("messages").insert({
-    sender_id: user.id,
-    recipient_id: input.recipient_id,
-    subject: input.subject ?? null,
-    body: input.body,
-    student_id: input.student_id ?? null,
-    parent_message_id: input.parent_message_id ?? null,
-  }).select().single();
-  if (error) throw error;
-
-  // notify recipient
-  await supabase.from("notifications").insert({
-    user_id: input.recipient_id,
-    type: "message",
-    title: input.subject || "Nouveau message",
-    body: input.body.slice(0, 120),
-    link: "/messages",
-    metadata: { message_id: data.id, sender_id: user.id },
+  const { data, error } = await supabase.rpc("send_user_message", {
+    _recipient_id: input.recipient_id,
+    _body: input.body,
+    _subject: input.subject ?? null,
+    _student_id: input.student_id ?? null,
+    _parent_message_id: input.parent_message_id ?? null,
   });
-  return data as Message;
+  if (error) throw error;
+  return { id: data } as Pick<Message, "id">;
 }
 
 export async function markMessageRead(id: string) {
-  await supabase.from("messages").update({ read_at: new Date().toISOString() }).eq("id", id);
+  const { error } = await supabase.rpc("mark_message_read", { _message_id: id });
+  if (error) throw error;
 }
 
 export async function listContacts() {

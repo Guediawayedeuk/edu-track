@@ -615,6 +615,17 @@ export type Database = {
       }
       is_parent_of_student: { Args: { _student_id: string }; Returns: boolean }
       is_student_self: { Args: { _student_id: string }; Returns: boolean }
+      mark_message_read: { Args: { _message_id: string }; Returns: undefined }
+      send_user_message: {
+        Args: {
+          _body: string
+          _parent_message_id?: string
+          _recipient_id: string
+          _student_id?: string
+          _subject?: string
+        }
+        Returns: string
+      }
       teacher_handles_class: { Args: { _class_id: string }; Returns: boolean }
     }
     Enums: {

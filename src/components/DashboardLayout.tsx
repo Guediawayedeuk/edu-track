@@ -6,7 +6,7 @@ import {
   FileText, BarChart3, Bell, LogOut, Menu, X, GraduationCap,
   ChevronRight, UserCircle, MessageSquare, Upload, CheckSquare,
   FileCheck, FolderOpen, Video, User, CreditCard, Megaphone,
-  ShieldCheck, KeyRound, UsersRound
+  ShieldCheck, KeyRound, UsersRound, Settings
 } from "lucide-react";
 import NotificationBell from "@/components/NotificationBell";
 
@@ -34,6 +34,7 @@ const adminNav: NavItem[] = [
   { label: "Sécurité", path: "/admin/security", icon: ShieldCheck },
   { label: "Rôles & permissions", path: "/admin/roles", icon: KeyRound },
   { label: "Rapports & stats", path: "/admin/stats", icon: BarChart3 },
+  { label: "Préférences notif.", path: "/settings/notifications", icon: Settings },
 ];
 
 const teacherNav: NavItem[] = [
@@ -49,6 +50,7 @@ const teacherNav: NavItem[] = [
   { label: "Messagerie", path: "/messages", icon: MessageSquare },
   { label: "Notifications", path: "/teacher/notifications", icon: Bell },
   { label: "Réunions en ligne", path: "/teacher/meetings", icon: Video },
+  { label: "Préférences notif.", path: "/settings/notifications", icon: Settings },
   { label: "Profil", path: "/teacher/profile", icon: User },
 ];
 
@@ -58,6 +60,7 @@ const parentNav: NavItem[] = [
   { label: "Bulletin", path: "/parent/report", icon: FileText },
   { label: "Emploi du temps", path: "/parent/timetable", icon: Calendar },
   { label: "Messages", path: "/messages", icon: MessageSquare },
+  { label: "Préférences notif.", path: "/settings/notifications", icon: Settings },
 ];
 
 interface DashboardLayoutProps {

@@ -8,12 +8,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
-import { Send, Plus, Mail, MailOpen, Search, X } from "lucide-react";
+import { Send, Plus, Mail, MailOpen, Search, X, Paperclip, Download, FileText, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 import { useAuth } from "@/hooks/useAuth";
-import { listMyMessages, sendMessage, markMessageRead, listContacts, type Message } from "@/lib/api/messages";
+import {
+  listMyMessages, sendMessage, markMessageRead, listContacts,
+  uploadMessageAttachments, listAttachmentsForMessages, getAttachmentUrl,
+  ATTACHMENT_ALLOWED, ATTACHMENT_MAX_BYTES,
+  type Message, type MessageAttachment,
+} from "@/lib/api/messages";
 
 const MessagesPage = () => {
   const { user, role } = useAuth();
@@ -21,11 +26,19 @@ const MessagesPage = () => {
   const msgsQ = useQuery({ queryKey: ["my-messages"], queryFn: listMyMessages });
   const contactsQ = useQuery({ queryKey: ["contacts"], queryFn: listContacts });
 
+  const messageIds = useMemo(() => (msgsQ.data ?? []).map((m) => m.id), [msgsQ.data]);
+  const attsQ = useQuery({
+    queryKey: ["message-attachments", messageIds],
+    queryFn: () => listAttachmentsForMessages(messageIds),
+    enabled: messageIds.length > 0,
+  });
+
   const [active, setActive] = useState<Message | null>(null);
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ recipient_id: "", subject: "", body: "" });
+  const [newFiles, setNewFiles] = useState<File[]>([]);
+  const [sending, setSending] = useState(false);
 
-  // Filters
   const [search, setSearch] = useState("");
   const [studentFilter, setStudentFilter] = useState<string>("all");
   const [dateFrom, setDateFrom] = useState("");
@@ -75,25 +88,55 @@ const MessagesPage = () => {
     return Array.from(set.keys());
   }, [msgsQ.data]);
 
+  const attachmentsByMessage = useMemo(() => {
+    const map = new Map<string, MessageAttachment[]>();
+    (attsQ.data ?? []).forEach((a) => {
+      if (!map.has(a.message_id)) map.set(a.message_id, []);
+      map.get(a.message_id)!.push(a);
+    });
+    return map;
+  }, [attsQ.data]);
+
+  const handleFiles = (list: FileList | null, setter: (f: File[]) => void) => {
+    if (!list) return;
+    const files = Array.from(list);
+    for (const f of files) {
+      if (f.size > ATTACHMENT_MAX_BYTES) { toast.error(`"${f.name}" dépasse 10 Mo`); return; }
+      if (!ATTACHMENT_ALLOWED.includes(f.type)) { toast.error(`Type non autorisé : ${f.name}`); return; }
+    }
+    setter(files);
+  };
+
   const send = async () => {
     if (!form.recipient_id || !form.body.trim()) { toast.error("Destinataire et message requis"); return; }
+    setSending(true);
     try {
-      await sendMessage(form);
+      const { id } = await sendMessage(form);
+      if (newFiles.length > 0) await uploadMessageAttachments(id, newFiles);
       toast.success("Message envoyé");
       setOpen(false);
       setForm({ recipient_id: "", subject: "", body: "" });
+      setNewFiles([]);
       qc.invalidateQueries({ queryKey: ["my-messages"] });
+      qc.invalidateQueries({ queryKey: ["message-attachments"] });
     } catch (e: any) { toast.error(e.message); }
+    finally { setSending(false); }
   };
 
-  const reply = async (body: string) => {
-    if (!active || !body.trim()) return;
+  const reply = async (body: string, files: File[]) => {
+    if (!active || (!body.trim() && files.length === 0)) return;
     const otherId = active.sender_id === user?.id ? active.recipient_id : active.sender_id;
-    try {
-      await sendMessage({ recipient_id: otherId, body, subject: active.subject ?? undefined, student_id: active.student_id, parent_message_id: active.parent_message_id ?? active.id });
-      qc.invalidateQueries({ queryKey: ["my-messages"] });
-      toast.success("Réponse envoyée");
-    } catch (e: any) { toast.error(e.message); }
+    const { id } = await sendMessage({
+      recipient_id: otherId,
+      body: body.trim() || "(pièce jointe)",
+      subject: active.subject ?? undefined,
+      student_id: active.student_id,
+      parent_message_id: active.parent_message_id ?? active.id,
+    });
+    if (files.length > 0) await uploadMessageAttachments(id, files);
+    qc.invalidateQueries({ queryKey: ["my-messages"] });
+    qc.invalidateQueries({ queryKey: ["message-attachments"] });
+    toast.success("Réponse envoyée");
   };
 
   const resetFilters = () => { setSearch(""); setStudentFilter("all"); setDateFrom(""); setDateTo(""); setUnreadOnly(false); };
@@ -123,13 +166,21 @@ const MessagesPage = () => {
               </div>
               <div><Label>Sujet</Label><Input value={form.subject} onChange={(e) => setForm({ ...form, subject: e.target.value })} /></div>
               <div><Label>Message</Label><Textarea rows={5} value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} /></div>
+              <div>
+                <Label className="flex items-center gap-2"><Paperclip className="h-4 w-4" /> Pièces jointes (PDF, images, ≤10 Mo)</Label>
+                <Input type="file" multiple accept=".pdf,image/png,image/jpeg,image/webp,image/gif" onChange={(e) => handleFiles(e.target.files, setNewFiles)} />
+                {newFiles.length > 0 && (
+                  <ul className="mt-2 space-y-1 text-xs text-muted-foreground">
+                    {newFiles.map((f, i) => <li key={i} className="flex items-center gap-2"><FileText className="h-3 w-3" /> {f.name} ({(f.size / 1024).toFixed(0)} Ko)</li>)}
+                  </ul>
+                )}
+              </div>
             </div>
-            <DialogFooter><Button onClick={send}><Send className="mr-2 h-4 w-4" /> Envoyer</Button></DialogFooter>
+            <DialogFooter><Button onClick={send} disabled={sending}><Send className="mr-2 h-4 w-4" /> {sending ? "Envoi…" : "Envoyer"}</Button></DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
 
-      {/* Filters */}
       <Card className="glass-card mb-4">
         <CardContent className="grid gap-3 p-4 md:grid-cols-5">
           <div className="relative md:col-span-2">
@@ -185,7 +236,7 @@ const MessagesPage = () => {
             {!active ? (
               <p className="text-center text-sm text-muted-foreground py-12">Aucun message sélectionné</p>
             ) : (
-              <ConversationView active={active} userId={user?.id ?? ""} all={msgsQ.data ?? []} onReply={reply} />
+              <ConversationView active={active} userId={user?.id ?? ""} all={msgsQ.data ?? []} attachments={attachmentsByMessage} onReply={reply} onFilesError={(m) => toast.error(m)} />
             )}
           </CardContent>
         </Card>
@@ -194,29 +245,113 @@ const MessagesPage = () => {
   );
 };
 
-const ConversationView = ({ active, userId, all, onReply }: { active: Message; userId: string; all: Message[]; onReply: (b: string) => Promise<void> }) => {
+const ConversationView = ({ active, userId, all, attachments, onReply, onFilesError }: {
+  active: Message; userId: string; all: Message[];
+  attachments: Map<string, MessageAttachment[]>;
+  onReply: (body: string, files: File[]) => Promise<void>;
+  onFilesError: (m: string) => void;
+}) => {
   const otherId = active.sender_id === userId ? active.recipient_id : active.sender_id;
   const thread = all
     .filter((m) => (m.sender_id === otherId || m.recipient_id === otherId))
     .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-  const [reply, setReply] = useState("");
+  const [replyBody, setReplyBody] = useState("");
+  const [replyFiles, setReplyFiles] = useState<File[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  const pickFiles = (list: FileList | null) => {
+    if (!list) return;
+    const files = Array.from(list);
+    for (const f of files) {
+      if (f.size > ATTACHMENT_MAX_BYTES) { onFilesError(`"${f.name}" dépasse 10 Mo`); return; }
+      if (!ATTACHMENT_ALLOWED.includes(f.type)) { onFilesError(`Type non autorisé : ${f.name}`); return; }
+    }
+    setReplyFiles(files);
+  };
+
+  const submit = async () => {
+    setBusy(true);
+    try { await onReply(replyBody, replyFiles); setReplyBody(""); setReplyFiles([]); }
+    catch (e: any) { onFilesError(e.message); }
+    finally { setBusy(false); }
+  };
 
   return (
     <div className="space-y-4">
       <div className="max-h-[500px] space-y-3 overflow-y-auto pr-2">
-        {thread.map((m) => (
-          <div key={m.id} className={`flex ${m.sender_id === userId ? "justify-end" : "justify-start"}`}>
-            <div className={`max-w-[75%] rounded-lg p-3 text-sm ${m.sender_id === userId ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
-              {m.subject && <p className="mb-1 text-[11px] font-semibold opacity-80">{m.subject}</p>}
-              <p className="whitespace-pre-wrap">{m.body}</p>
-              <p className="mt-1 text-[10px] opacity-70">{formatDistanceToNow(new Date(m.created_at), { locale: fr, addSuffix: true })}</p>
+        {thread.map((m) => {
+          const mine = m.sender_id === userId;
+          const atts = attachments.get(m.id) ?? [];
+          return (
+            <div key={m.id} className={`flex ${mine ? "justify-end" : "justify-start"}`}>
+              <div className={`max-w-[75%] rounded-lg p-3 text-sm ${mine ? "bg-primary text-primary-foreground" : "bg-muted"}`}>
+                {m.subject && <p className="mb-1 text-[11px] font-semibold opacity-80">{m.subject}</p>}
+                <p className="whitespace-pre-wrap">{m.body}</p>
+                {atts.length > 0 && (
+                  <div className="mt-2 space-y-2">
+                    {atts.map((a) => <AttachmentItem key={a.id} att={a} mine={mine} />)}
+                  </div>
+                )}
+                <p className="mt-1 text-[10px] opacity-70">{formatDistanceToNow(new Date(m.created_at), { locale: fr, addSuffix: true })}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
-      <div className="flex gap-2">
-        <Textarea rows={2} placeholder="Répondre..." value={reply} onChange={(e) => setReply(e.target.value)} />
-        <Button onClick={async () => { await onReply(reply); setReply(""); }} disabled={!reply.trim()}><Send className="h-4 w-4" /></Button>
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          <Textarea rows={2} placeholder="Répondre..." value={replyBody} onChange={(e) => setReplyBody(e.target.value)} />
+          <Button onClick={submit} disabled={busy || (!replyBody.trim() && replyFiles.length === 0)}><Send className="h-4 w-4" /></Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <Label className="flex cursor-pointer items-center gap-1 text-muted-foreground hover:text-foreground">
+            <Paperclip className="h-3 w-3" /> Joindre
+            <input type="file" multiple className="hidden" accept=".pdf,image/png,image/jpeg,image/webp,image/gif" onChange={(e) => pickFiles(e.target.files)} />
+          </Label>
+          {replyFiles.map((f, i) => (
+            <span key={i} className="flex items-center gap-1 rounded bg-muted px-2 py-0.5">
+              <FileText className="h-3 w-3" /> {f.name}
+              <button onClick={() => setReplyFiles(replyFiles.filter((_, j) => j !== i))} className="ml-1 text-muted-foreground hover:text-destructive"><X className="h-3 w-3" /></button>
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AttachmentItem = ({ att, mine }: { att: MessageAttachment; mine: boolean }) => {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const isImage = (att.mime_type ?? "").startsWith("image/");
+
+  useEffect(() => {
+    if (!isImage) return;
+    let cancelled = false;
+    getAttachmentUrl(att.storage_path).then((u) => { if (!cancelled) setPreviewUrl(u); }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [att.storage_path, isImage]);
+
+  const open = async (download: boolean) => {
+    try {
+      const url = await getAttachmentUrl(att.storage_path, download);
+      window.open(url, "_blank");
+    } catch (e: any) { toast.error(e.message); }
+  };
+
+  return (
+    <div className={`rounded border ${mine ? "border-primary-foreground/30 bg-primary-foreground/10" : "border-border bg-background/50"} p-2`}>
+      {isImage && previewUrl && (
+        <button onClick={() => open(false)} className="mb-2 block w-full">
+          <img src={previewUrl} alt={att.file_name} className="max-h-48 w-full rounded object-cover" />
+        </button>
+      )}
+      <div className="flex items-center justify-between gap-2 text-xs">
+        <span className="flex min-w-0 items-center gap-1 truncate">
+          {isImage ? <ImageIcon className="h-3 w-3 shrink-0" /> : <FileText className="h-3 w-3 shrink-0" />}
+          <span className="truncate">{att.file_name}</span>
+          {att.size_bytes && <span className="opacity-70 shrink-0">· {(att.size_bytes / 1024).toFixed(0)} Ko</span>}
+        </span>
+        <button onClick={() => open(true)} className="flex items-center gap-1 hover:underline shrink-0"><Download className="h-3 w-3" /> Télécharger</button>
       </div>
     </div>
   );

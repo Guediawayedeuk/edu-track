@@ -72,7 +72,7 @@ export async function uploadMessageAttachments(message_id: string, files: File[]
   // Anti-virus / content validation (blocking)
   const { scanFiles } = await import("@/lib/security/attachmentScanner");
   const scan = await scanFiles(files, ATTACHMENT_ALLOWED);
-  if (!scan.ok) throw new Error(`Fichier bloqué par l'antivirus : ${scan.reason}`);
+  if (!scan.ok) throw new Error(`Fichier bloqué par l'antivirus : ${(scan as { reason: string }).reason}`);
   const uploaded: MessageAttachment[] = [];
   for (const file of files) {
     if (file.size > ATTACHMENT_MAX_BYTES) throw new Error(`"${file.name}" dépasse 10 Mo`);

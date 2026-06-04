@@ -111,7 +111,7 @@ export async function scanFile(file: File, allowedMimes: string[]): Promise<Scan
 export async function scanFiles(files: File[], allowedMimes: string[]): Promise<ScanResult> {
   for (const f of files) {
     const r = await scanFile(f, allowedMimes);
-    if (!r.ok) return { ok: false, reason: `"${f.name}" — ${r.reason}` };
+    if (!r.ok) return { ok: false, reason: `"${f.name}" — ${(r as { reason: string }).reason}` };
   }
   return { ok: true };
 }

@@ -69,6 +69,10 @@ export async function listContacts() {
 export async function uploadMessageAttachments(message_id: string, files: File[]) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) throw new Error("Non authentifié");
+  // Anti-virus / content validation (blocking)
+  const { scanFiles } = await import("@/lib/security/attachmentScanner");
+  const scan = await scanFiles(files, ATTACHMENT_ALLOWED);
+  if (!scan.ok) throw new Error(`Fichier bloqué par l'antivirus : ${scan.reason}`);
   const uploaded: MessageAttachment[] = [];
   for (const file of files) {
     if (file.size > ATTACHMENT_MAX_BYTES) throw new Error(`"${file.name}" dépasse 10 Mo`);

@@ -40,24 +40,22 @@ import ParentDashboard from "./pages/ParentDashboard";
 import Messages from "./pages/Messages";
 import NotificationSettings from "./pages/NotificationSettings";
 import NotFound from "./pages/NotFound";
+import NoRole from "./pages/NoRole";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import RoleLoadingScreen from "./components/RoleLoadingScreen";
 
 const queryClient = new QueryClient();
 
 const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) => {
-  const { user, role, loading } = useAuth();
+  const { user, role, loading, roleLoaded } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-muted-foreground">Chargement...</div>
-      </div>
-    );
-  }
-
+  if (loading) return <RoleLoadingScreen message="Vérification de la session..." />;
   if (!user) return <Navigate to="/login" replace />;
+  if (!roleLoaded) return <RoleLoadingScreen />;
+  if (!role) return <Navigate to="/no-role" replace />;
 
-  if (allowedRoles && role && !allowedRoles.includes(role)) {
-    // Redirect to correct dashboard
+  if (allowedRoles && !allowedRoles.includes(role)) {
     const dashboardMap: Record<string, string> = { admin: "/admin", teacher: "/teacher", parent: "/parent" };
     return <Navigate to={dashboardMap[role] || "/"} replace />;
   }
@@ -66,8 +64,10 @@ const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode;
 };
 
 const AuthRedirect = () => {
-  const { user, role, loading } = useAuth();
-  if (loading) return null;
+  const { user, role, loading, roleLoaded } = useAuth();
+  if (loading) return <RoleLoadingScreen message="Vérification de la session..." />;
+  if (user && !roleLoaded) return <RoleLoadingScreen />;
+  if (user && roleLoaded && !role) return <Navigate to="/no-role" replace />;
   if (user && role) {
     const dashboardMap: Record<string, string> = { admin: "/admin", teacher: "/teacher", parent: "/parent" };
     return <Navigate to={dashboardMap[role] || "/"} replace />;

@@ -22,6 +22,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
+  const [roleLoaded, setRoleLoaded] = useState(false);
 
   const fetchRole = async (userId: string) => {
     const { data } = await supabase
@@ -30,6 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       .eq("user_id", userId)
       .maybeSingle();
     setRole((data?.role as AppRole) ?? null);
+    setRoleLoaded(true);
   };
 
   useEffect(() => {
@@ -38,9 +40,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
+          setRoleLoaded(false);
           await fetchRole(session.user.id);
         } else {
           setRole(null);
+          setRoleLoaded(false);
         }
         setLoading(false);
       }
@@ -51,6 +55,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchRole(session.user.id);
+      } else {
+        setRoleLoaded(false);
       }
       setLoading(false);
     });

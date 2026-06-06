@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { GraduationCap, Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -102,6 +103,11 @@ const Login = () => {
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
+              </div>
+              <div className="mt-2 text-right">
+                <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+                  Mot de passe oublié ?
+                </Link>
               </div>
             </div>
 

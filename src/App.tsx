@@ -44,24 +44,9 @@ import NoRole from "./pages/NoRole";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
 import RoleLoadingScreen from "./components/RoleLoadingScreen";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const queryClient = new QueryClient();
-
-const ProtectedRoute = ({ children, allowedRoles }: { children: React.ReactNode; allowedRoles?: string[] }) => {
-  const { user, role, loading, roleLoaded } = useAuth();
-
-  if (loading) return <RoleLoadingScreen message="Vérification de la session..." />;
-  if (!user) return <Navigate to="/login" replace />;
-  if (!roleLoaded) return <RoleLoadingScreen />;
-  if (!role) return <Navigate to="/no-role" replace />;
-
-  if (allowedRoles && !allowedRoles.includes(role)) {
-    const dashboardMap: Record<string, string> = { admin: "/admin", teacher: "/teacher", parent: "/parent" };
-    return <Navigate to={dashboardMap[role] || "/"} replace />;
-  }
-
-  return <>{children}</>;
-};
 
 const AuthRedirect = () => {
   const { user, role, loading, roleLoaded } = useAuth();

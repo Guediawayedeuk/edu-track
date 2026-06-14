@@ -50,8 +50,8 @@ const queryClient = new QueryClient();
 
 const AuthRedirect = () => {
   const { user, role, loading, roleLoaded } = useAuth();
-  if (loading) return <RoleLoadingScreen message="Vérification de la session..." />;
-  if (user && !roleLoaded) return <RoleLoadingScreen />;
+  if (loading) return <RoleLoadingScreen step={0} message="Vérification de la session..." />;
+  if (user && !roleLoaded) return <RoleLoadingScreen step={1} message="Détection de votre rôle..." />;
   if (user && roleLoaded && !role) return <Navigate to="/no-role" replace />;
   if (user && role) {
     const dashboardMap: Record<string, string> = { admin: "/admin", teacher: "/teacher", parent: "/parent" };

@@ -16,9 +16,9 @@ const DASHBOARD_MAP: Record<string, string> = {
 export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) => {
   const { user, role, loading, roleLoaded } = useAuth();
 
-  if (loading) return <RoleLoadingScreen message="Vérification de la session..." />;
+  if (loading) return <RoleLoadingScreen step={0} message="Vérification de la session..." />;
   if (!user) return <Navigate to="/login" replace />;
-  if (!roleLoaded) return <RoleLoadingScreen />;
+  if (!roleLoaded) return <RoleLoadingScreen step={1} message="Détection de votre rôle..." />;
   if (!role) return <Navigate to="/no-role" replace />;
 
   if (allowedRoles && !allowedRoles.includes(role)) {
